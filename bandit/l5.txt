@@ -1,0 +1,4 @@
+HWasnPhtq9AVKe0dmk45nxy20cvUa6EG
+
+
+command used: find . -type f -size 1033c ! -executable -exec file {} + | grep -w text
