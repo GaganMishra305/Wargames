@@ -1,0 +1,7 @@
+MU4VWeTyJk8ROof1qqmcBPaLh7lDCPvS
+
+chmod 600 access_key
+
+otherwise it doesnt take it
+
+8xCjnmgoKbGLhHFAZlGE5Tmu4M2tKJQo
