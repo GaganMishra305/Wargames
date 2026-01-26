@@ -1,0 +1,5 @@
+FO5dwFsc0cbaIiH0h8J2eUks2vdTDwAn
+
+a lotta recursive opening
+
+---> main command: xxd -r data.txt > data.bin
