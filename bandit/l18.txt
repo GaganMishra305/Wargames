@@ -1,0 +1,5 @@
+cGWpMaKXVwDUNgPAVJbWYuGHVn9zl3j8
+
+direct command exectuion after ssh
+
+COMMAND:  ssh bandit18@bandit.labs.overthewire.org -p 2220 "cat readme"
